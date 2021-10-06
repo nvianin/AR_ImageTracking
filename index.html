@@ -9,11 +9,14 @@
     <script src='./three.js/examples/vendor/three.js/GLTFLoader.js'></script>
     <!-- ar.js -->
     <script src='./three.js/build/ar-nft.js'></script>
-    <base href="{{site.baseurl}}" a>
+    <base href="{{site.baseurl}}">
     </base>
 
     <script>
         THREEx.ArToolkitContext.baseURL = './'
+        /* let url = document.documentURI
+        if (url.includes('index.html')) url = url.replace('index.html', '');
+        THREEx.ArToolkitContext.baseURL = url */
     </script>
 </head>
 
