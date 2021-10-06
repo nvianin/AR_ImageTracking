@@ -2,159 +2,168 @@
   //		Init
   //////////////////////////////////////////////////////////////////////////////////
 
-  var renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      precision: 'mediump',
-  });
+  let log = console.log;
+  var camera, light, renderer, scene;
+  THREEx.ArToolkitContext.baseURL = "./"
 
-  var clock = new THREE.Clock();
+  window.onload = () => {
+      renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          precision: 'mediump',
+      });
 
-  var mixers = [];
+      var clock = new THREE.Clock();
 
-  renderer.setPixelRatio(window.devicePixelRatio);
+      var mixers = [];
 
-  renderer.setClearColor(new THREE.Color('lightgrey'), 0)
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.domElement.style.position = 'absolute'
-  renderer.domElement.style.top = '0px'
-  renderer.domElement.style.left = '0px'
-  document.body.appendChild(renderer.domElement);
+      renderer.setPixelRatio(window.devicePixelRatio);
 
-  // init scene and camera
-  var scene = new THREE.Scene();
+      renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.domElement.style.position = 'absolute'
+      renderer.domElement.style.top = '0px'
+      renderer.domElement.style.left = '0px'
+      document.body.appendChild(renderer.domElement);
 
-  //////////////////////////////////////////////////////////////////////////////////
-  //		Initialize a basic camera
-  //////////////////////////////////////////////////////////////////////////////////
+      // init scene and camera
+      scene = new THREE.Scene();
 
-  // Create a camera
-  var camera = new THREE.Camera();
-  scene.add(camera);
+      //////////////////////////////////////////////////////////////////////////////////
+      //		Initialize a basic camera
+      //////////////////////////////////////////////////////////////////////////////////
 
-  var light = new THREE.AmbientLight(0xffffff);
-  scene.add(light);
+      // Create a camera
+      camera = new THREE.Camera();
+      scene.add(camera);
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //          handle arToolkitSource
-  ////////////////////////////////////////////////////////////////////////////////
+      light = new THREE.AmbientLight(0xffffff);
+      scene.add(light);
 
-  var arToolkitSource = new THREEx.ArToolkitSource({
-      sourceType: 'webcam',
-      sourceWidth: 480,
-      sourceHeight: 640,
-  })
+      ////////////////////////////////////////////////////////////////////////////////
+      //          handle arToolkitSource
+      ////////////////////////////////////////////////////////////////////////////////
 
-  arToolkitSource.init(function onReady() {
-      // use a resize to fullscreen mobile devices
-      setTimeout(function () {
+      var arToolkitSource = new THREEx.ArToolkitSource({
+          sourceType: 'webcam',
+          sourceWidth: 480,
+          sourceHeight: 640,
+      })
+
+      arToolkitSource.init(function onReady() {
+          // use a resize to fullscreen mobile devices
+          setTimeout(function () {
+              onResize()
+          }, 1000);
+      })
+
+      // handle resize
+      window.addEventListener('resize', function () {
           onResize()
-      }, 1000);
-  })
+      })
 
-  // handle resize
-  window.addEventListener('resize', function () {
-      onResize()
-  })
+      // listener for end loading of NFT marker
+      window.addEventListener('arjs-nft-loaded', function (ev) {
+          console.log(ev);
+      })
 
-  // listener for end loading of NFT marker
-  window.addEventListener('arjs-nft-loaded', function (ev) {
-      console.log(ev);
-  })
-
-  function onResize() {
-      arToolkitSource.onResizeElement()
-      arToolkitSource.copyElementSizeTo(renderer.domElement)
-      if (arToolkitContext.arController !== null) {
-          arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+      function onResize() {
+          arToolkitSource.onResizeElement()
+          arToolkitSource.copyElementSizeTo(renderer.domElement)
+          if (arToolkitContext.arController !== null) {
+              arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+          }
       }
-  }
+      log("setup three")
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //          initialize arToolkitContext
-  ////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      //          initialize arToolkitContext
+      ////////////////////////////////////////////////////////////////////////////////
 
-  // create atToolkitContext
-  var arToolkitContext = new THREEx.ArToolkitContext({
-      detectionMode: 'mono',
-      canvasWidth: 480,
-      canvasHeight: 640,
-  }, {
-      sourceWidth: 480,
-      sourceHeight: 640,
-  })
+      // create atToolkitContext
+      var arToolkitContext = new THREEx.ArToolkitContext({
+          detectionMode: 'mono',
+          canvasWidth: 480,
+          canvasHeight: 640,
+      }, {
+          sourceWidth: 480,
+          sourceHeight: 640,
+      })
 
-  // initialize it
-  arToolkitContext.init(function onCompleted() {
-      // copy projection matrix to camera
-      camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-  })
+      // initialize it
+      log(camera.projectionMatrix);
+      arToolkitContext.init(function onCompleted() {
+          // copy projection matrix to camera
+          camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+          log("setup camera")
+      })
+      log("init ar toolkit context")
+      ////////////////////////////////////////////////////////////////////////////////
+      //          Create a ArMarkerControls
+      ////////////////////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //          Create a ArMarkerControls
-  ////////////////////////////////////////////////////////////////////////////////
+      // init controls for camera
+      var markerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
+          type: 'nft',
+          descriptorsUrl: 'nft_data/test_marker',
+          changeMatrixMode: 'cameraTransformMatrix'
+      })
 
-  // init controls for camera
-  var markerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
-      type: 'nft',
-      descriptorsUrl: 'data/dataNFT/pinball',
-      changeMatrixMode: 'cameraTransformMatrix'
-  })
+      scene.visible = false
 
-  scene.visible = false
-
-  var root = new THREE.Object3D();
-  scene.add(root);
-
-  //////////////////////////////////////////////////////////////////////////////////
-  //		add an object in the scene
-  //////////////////////////////////////////////////////////////////////////////////
-
-  var threeGLTFLoader = new THREE.GLTFLoader();
-  var model;
-
-  threeGLTFLoader.load("./resources/Flamingo.glb", function (gltf) {
-      model = gltf.scene.children[0];
-      model.name = 'Flamingo';
-
-      var animation = gltf.animations[0];
-      var mixer = new THREE.AnimationMixer(model);
-      mixers.push(mixer);
-      var action = mixer.clipAction(animation);
-      action.play();
-
-      root.matrixAutoUpdate = false;
-      root.add(model);
-
-      model.position.z = -200;
-      model.position.x = 100;
-      model.position.y = 100;
-
+      var root = new THREE.Object3D();
+      scene.add(root);
 
       //////////////////////////////////////////////////////////////////////////////////
-      //		render the whole thing on the page
+      //		add an object in the scene
       //////////////////////////////////////////////////////////////////////////////////
 
-      var animate = function () {
-          requestAnimationFrame(animate);
+      var threeGLTFLoader = new THREE.GLTFLoader();
+      var model;
 
-          if (mixers.length > 0) {
-              for (var i = 0; i < mixers.length; i++) {
-                  mixers[i].update(clock.getDelta());
+      threeGLTFLoader.load("./models/test_model.glb", function (gltf) {
+          model = gltf.scene.children[0];
+          model.name = 'Flamingo';
+
+          /* var animation = gltf.animations[0];
+          var mixer = new THREE.AnimationMixer(model);
+          mixers.push(mixer);
+          var action = mixer.clipAction(animation);
+          action.play(); */
+
+          root.matrixAutoUpdate = false;
+          root.add(model);
+
+          model.position.z = -200;
+          model.position.x = 100;
+          model.position.y = 100;
+
+
+          //////////////////////////////////////////////////////////////////////////////////
+          //		render the whole thing on the page
+          //////////////////////////////////////////////////////////////////////////////////
+          log("setup everything")
+          var animate = function () {
+              requestAnimationFrame(animate);
+
+              /* if (mixers.length > 0) {
+                  for (var i = 0; i < mixers.length; i++) {
+                      mixers[i].update(clock.getDelta());
+                  }
+              } */
+
+              if (!arToolkitSource.ready) {
+                  return;
               }
-          }
 
-          if (!arToolkitSource.ready) {
-              return;
-          }
+              arToolkitContext.update(arToolkitSource.domElement)
 
-          arToolkitContext.update(arToolkitSource.domElement)
+              // update scene.visible if the marker is seen
+              scene.visible = camera.visible;
 
-          // update scene.visible if the marker is seen
-          scene.visible = camera.visible;
+              renderer.render(scene, camera);
+          };
 
-          renderer.render(scene, camera);
-      };
-
-      requestAnimationFrame(animate);
-  });
+          requestAnimationFrame(animate);
+      });
+  }
