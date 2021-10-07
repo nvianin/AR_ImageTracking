@@ -203,6 +203,7 @@
             //////////////////////////////////////////////////////////////////////////////////
 
             var animate = function () {
+                frameCount++;
                 now = Date.now();
                 requestAnimationFrame(animate);
 
@@ -225,6 +226,7 @@
                 dt = now - then;
                 fps = 1000 / dt;
                 then = now;
+                frameCount % 30 == 0 ? log(fps) : 1;
             };
 
             requestAnimationFrame(animate);
@@ -234,5 +236,6 @@
         let then = Date.now();
         let now = then;
         let fps = 0;
+        let frameCount = 0;
     </script>
 </body>
