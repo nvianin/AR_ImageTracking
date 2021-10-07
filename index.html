@@ -65,6 +65,7 @@
         <div class="arjs-loader-spinner"></div>
     </div>
     <script>
+        let log = console.log
         //////////////////////////////////////////////////////////////////////////////////
         //		Init
         //////////////////////////////////////////////////////////////////////////////////
@@ -180,57 +181,58 @@
         var threeGLTFLoader = new THREE.GLTFLoader();
         var model;
 
-        threeGLTFLoader.load("./three.js/examples/resources/Flamingo.glb", function (gltf) {
-            model = gltf.scene.children[0];
-            model.name = 'Flamingo';
+        threeGLTFLoader.load("https://nvianin.github.io/AR_ImageTracking/three.js/examples/resources/Flamingo.glb",
+            function (gltf) {
+                model = gltf.scene.children[0];
+                model.name = 'Flamingo';
 
-            var animation = gltf.animations[0];
-            var mixer = new THREE.AnimationMixer(model);
-            mixers.push(mixer);
-            var action = mixer.clipAction(animation);
-            action.play();
+                var animation = gltf.animations[0];
+                var mixer = new THREE.AnimationMixer(model);
+                mixers.push(mixer);
+                var action = mixer.clipAction(animation);
+                action.play();
 
-            root.matrixAutoUpdate = false;
-            root.add(model);
+                root.matrixAutoUpdate = false;
+                root.add(model);
 
-            model.position.z = -200;
-            model.position.x = 100;
-            model.position.y = 100;
+                model.position.z = -200;
+                model.position.x = 100;
+                model.position.y = 100;
 
 
-            //////////////////////////////////////////////////////////////////////////////////
-            //		render the whole thing on the page
-            //////////////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////////////
+                //		render the whole thing on the page
+                //////////////////////////////////////////////////////////////////////////////////
+                log("starting render")
+                var animate = function () {
+                    frameCount++;
+                    now = Date.now();
+                    requestAnimationFrame(animate);
 
-            var animate = function () {
-                frameCount++;
-                now = Date.now();
-                requestAnimationFrame(animate);
-
-                if (mixers.length > 0) {
-                    for (var i = 0; i < mixers.length; i++) {
-                        mixers[i].update(clock.getDelta());
+                    if (mixers.length > 0) {
+                        for (var i = 0; i < mixers.length; i++) {
+                            mixers[i].update(clock.getDelta());
+                        }
                     }
-                }
 
-                if (!arToolkitSource.ready) {
-                    return;
-                }
+                    if (!arToolkitSource.ready) {
+                        return;
+                    }
 
-                arToolkitContext.update(arToolkitSource.domElement)
+                    arToolkitContext.update(arToolkitSource.domElement)
 
-                // update scene.visible if the marker is seen
-                scene.visible = camera.visible;
+                    // update scene.visible if the marker is seen
+                    scene.visible = camera.visible;
 
-                renderer.render(scene, camera);
-                dt = now - then;
-                fps = 1000 / dt;
-                then = now;
-                frameCount % 30 == 0 ? log(fps) : 1;
-            };
+                    renderer.render(scene, camera);
+                    dt = now - then;
+                    fps = 1000 / dt;
+                    then = now;
+                    frameCount % 30 == 0 ? log(fps) : 1;
+                };
 
-            requestAnimationFrame(animate);
-        });
+                requestAnimationFrame(animate);
+            });
 
         let dt = 0;
         let then = Date.now();
