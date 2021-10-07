@@ -203,6 +203,7 @@
             //////////////////////////////////////////////////////////////////////////////////
 
             var animate = function () {
+                now = Date.now();
                 requestAnimationFrame(animate);
 
                 if (mixers.length > 0) {
@@ -221,9 +222,17 @@
                 scene.visible = camera.visible;
 
                 renderer.render(scene, camera);
+                dt = now - then;
+                fps = 1000 / dt;
+                then = now;
             };
 
             requestAnimationFrame(animate);
         });
+
+        let dt = 0;
+        let then = Date.now();
+        let now = then;
+        let fps = 0;
     </script>
 </body>
